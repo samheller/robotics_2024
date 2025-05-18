@@ -10,3 +10,12 @@ The offensive approach focuses on rapid target acquisition and aggressive scorin
 
 This strategy trades precision for speed. Tune the velocities based on how much
 room you have on the field.
+
+## State Flow
+
+1. **Manual** – regular driver control.
+2. **Scanning** – quick spin to find a scoring object.
+3. **Aligning** – rapid turn to point directly at the target.
+4. **Approaching** – drive forward at high speed until close.
+5. **Attacking** – extended arm motion to ensure a score.
+6. **Retreating** – reverse away before returning to manual mode.

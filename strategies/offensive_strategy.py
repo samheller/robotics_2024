@@ -36,8 +36,10 @@ optical_sensor: Optical | None = None
 class RobotState(Enum):
     MANUAL = auto()
     SCANNING = auto()
-    TARGET_FOUND = auto()
+    ALIGNING = auto()
+    APPROACHING = auto()
     ATTACKING = auto()
+    RETREATING = auto()
 
 current_state = RobotState.MANUAL
 
@@ -77,10 +79,10 @@ def handle_scanning():
     drive_train.set_turn_velocity(70, PERCENT)
     drive_train.turn(RIGHT)
 
-    # Transition to TARGET_FOUND if distance sensor spots something
+    # Transition to ALIGNING if distance sensor spots something
     if distance_sensor.object_size() in [ObjectSizeType.MEDIUM, ObjectSizeType.LARGE]:
         drive_train.stop()
-        current_state = RobotState.TARGET_FOUND
+        current_state = RobotState.ALIGNING
 
     # User can cancel scanning with button A
     if controller.buttonA.pressing():
@@ -88,7 +90,15 @@ def handle_scanning():
         current_state = RobotState.MANUAL
 
 
-def handle_target_found():
+def handle_aligning():
+    global current_state
+    # Quick turn to face the detected target
+    drive_train.set_turn_velocity(70, PERCENT)
+    drive_train.turn_for(RIGHT, 15, DEGREES)
+    current_state = RobotState.APPROACHING
+
+
+def handle_approaching():
     global current_state
 
     # Approach aggressively
@@ -120,7 +130,14 @@ def handle_attacking():
     wait(2, SECONDS)
     arm_drive.stop()
 
-    # After attack, back up and return to manual control
+    # After attack, prepare to retreat
+    current_state = RobotState.RETREATING
+
+
+def handle_retreating():
+    global current_state
+
+    # Drive backward before handing control back to the driver
     drive_train.drive_for(REVERSE, 20, INCHES)
     current_state = RobotState.MANUAL
 
@@ -129,8 +146,10 @@ def handle_attacking():
 state_handlers = {
     RobotState.MANUAL: handle_manual,
     RobotState.SCANNING: handle_scanning,
-    RobotState.TARGET_FOUND: handle_target_found,
+    RobotState.ALIGNING: handle_aligning,
+    RobotState.APPROACHING: handle_approaching,
     RobotState.ATTACKING: handle_attacking,
+    RobotState.RETREATING: handle_retreating,
 }
 
 # ------------------------------------------------------------

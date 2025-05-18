@@ -1,28 +1,37 @@
 from vex import *
 from enum import Enum, auto
 
+
 brain = Brain()
 controller = Controller(PRIMARY)
 
-# Drive motors
+# Drive motors (Team 4 configuration)
 left_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
-left_motor_b = Motor(Ports.PORT3, GearSetting.RATIO_18_1, False)
+left_motor_b = Motor(Ports.PORT2, GearSetting.RATIO_18_1, False)
 left_drive = MotorGroup(left_motor_a, left_motor_b)
 
-right_motor_a = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
+right_motor_a = Motor(Ports.PORT3, GearSetting.RATIO_18_1, True)
 right_motor_b = Motor(Ports.PORT4, GearSetting.RATIO_18_1, True)
 right_drive = MotorGroup(right_motor_a, right_motor_b)
 
 drive_train = DriveTrain(left_drive, right_drive, 319.19, 295, 40, MM, 1)
 
-# Arm motors
-arm_motor_a = Motor(Ports.PORT5, GearSetting.RATIO_36_1, False)
-arm_motor_b = Motor(Ports.PORT6, GearSetting.RATIO_36_1, True)
+# Arm motors (Team 4 configuration)
+arm_motor_a = Motor(Ports.PORT6, GearSetting.RATIO_18_1, False)
+arm_motor_b = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
 arm_drive = MotorGroup(arm_motor_a, arm_motor_b)
 
-# Sensors
-distance_sensor = Distance(Ports.PORT20)
-optical_sensor = Optical(Ports.PORT9)
+# Distance sensors (Team 4 configuration)
+front_distance = Distance(Ports.PORT9)
+rear_distance = Distance(Ports.PORT8)
+left_distance = Distance(Ports.PORT10)
+right_distance = Distance(Ports.PORT20)
+
+# Use front sensor by default for state machine logic
+distance_sensor = front_distance
+
+# Team 4 robot does not have an optical sensor
+optical_sensor: Optical | None = None
 
 class RobotState(Enum):
     MANUAL = auto()
@@ -132,9 +141,10 @@ def display_status():
     brain.screen.set_cursor(1, 1)
     brain.screen.print("State: " + current_state.name)
 
-    hue = optical_sensor.hue()
-    brain.screen.set_cursor(2, 1)
-    brain.screen.print("Hue: " + str(hue))
+    if optical_sensor is not None:
+        hue = optical_sensor.hue()
+        brain.screen.set_cursor(2, 1)
+        brain.screen.print("Hue: " + str(hue))
 
     distance_mm = distance_sensor.object_distance(MM)
     brain.screen.set_cursor(3, 1)

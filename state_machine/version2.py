@@ -36,8 +36,8 @@ optical_sensor: Optical | None = None
 class RobotState(Enum):
     MANUAL = auto()
     SCANNING = auto()
-    TARGET_FOUND = auto()
-    ATTACKING = auto()
+    APPROACH_ROBOT = auto()
+    ATTEMPT_FLIP = auto()
 
 current_state = RobotState.MANUAL
 
@@ -76,10 +76,10 @@ def handle_scanning():
     drive_train.set_turn_velocity(50, PERCENT)
     drive_train.turn(RIGHT)
 
-    # Transition to TARGET_FOUND if distance sensor spots something
+    # Transition to APPROACH_ROBOT if the distance sensor detects something
     if distance_sensor.object_size() in [ObjectSizeType.MEDIUM, ObjectSizeType.LARGE]:
         drive_train.stop()
-        current_state = RobotState.TARGET_FOUND
+        current_state = RobotState.APPROACH_ROBOT
 
     # User can cancel scanning with button A
     if controller.buttonA.pressing():
@@ -87,17 +87,17 @@ def handle_scanning():
         current_state = RobotState.MANUAL
 
 
-def handle_target_found():
+def handle_approach_robot():
     global current_state
 
     # Approach slowly
     drive_train.set_drive_velocity(30, PERCENT)
     drive_train.drive_for(FORWARD, 6, INCHES)
 
-    # If the target is close enough, begin attacking
+    # If the target is close enough, attempt to flip
     if distance_sensor.object_distance(MM) < 300:
         drive_train.stop()
-        current_state = RobotState.ATTACKING
+        current_state = RobotState.ATTEMPT_FLIP
         return
 
     # If the target disappears, resume scanning
@@ -106,7 +106,7 @@ def handle_target_found():
         current_state = RobotState.SCANNING
 
 
-def handle_attacking():
+def handle_attempt_flip():
     global current_state
 
     arm_drive.set_velocity(50, PERCENT)
@@ -119,17 +119,17 @@ def handle_attacking():
     wait(1.45, SECONDS)
     arm_drive.stop()
 
-    # After attack, back up and return to manual control
+    # After the flip attempt, back up and resume scanning
     drive_train.drive_for(REVERSE, 20, INCHES)
-    current_state = RobotState.MANUAL
+    current_state = RobotState.SCANNING
 
 # ------------------------------------------------------------
 # Map states to handlers
 state_handlers = {
     RobotState.MANUAL: handle_manual,
     RobotState.SCANNING: handle_scanning,
-    RobotState.TARGET_FOUND: handle_target_found,
-    RobotState.ATTACKING: handle_attacking,
+    RobotState.APPROACH_ROBOT: handle_approach_robot,
+    RobotState.ATTEMPT_FLIP: handle_attempt_flip,
 }
 
 # ------------------------------------------------------------
